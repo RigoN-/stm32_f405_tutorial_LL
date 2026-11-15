@@ -1,0 +1,160 @@
+#######################################################################
+# Project:
+NAME = 00_blank
+OUTPATH = ./_build/
+PROJECT = $(OUTPATH)/$(NAME)
+#######################################################################
+# Board
+DEVICE = STM32F405xx
+BOARD = WeAct-STM32F405RGT6
+#######################################################################
+# MCU
+MCU = -mcpu=cortex-m4
+FPU = -mfloat-abi=hard -mfpu=fpv4-sp-d16
+BYTE_ORDER= -mlittle-endian
+HEAP_SIZE = 0x400
+#######################################################################
+# Directories
+CORE = ../../driver/stm32f4xx/core
+PLIB_LL_INC = ../../driver/stm32f4xx/plib/LL/inc
+PLIB_LL_SRC = ../../driver/stm32f4xx/plib/LL/src
+PLIB_HAL_INC = ../../driver/stm32f4xx/plib/HAL/inc
+PLIB_HALL_SRC = ../../driver/stm32f4xx/plib/HAL/src
+LIBS = ../../lib
+#######################################################################
+# Toolchain:
+# Compiler/Assembler/Linker/etc
+PATH_GCC=../../../tools/gcc-arm-none-eabi/bin
+PATH_ST_LINK=../../../tools\ST-Link\ST-LINK_Utility
+PREFIX = $(PATH_GCC)/arm-none-eabi
+CC = $(PREFIX)-gcc
+AS = $(PREFIX)-as
+AR = $(PREFIX)-ar
+LD = $(PREFIX)-gcc
+NM = $(PREFIX)-nm
+OBJCOPY = $(PREFIX)-objcopy
+OBJDUMP = $(PREFIX)-objdump
+READELF = $(PREFIX)-readelf
+SIZE = $(PREFIX)-size
+GDB = $(PREFIX)-gdb
+OPENOCD=openocd
+ST_LINK=$(PATH_ST_LINK)/ST-LINK_CLI.exe
+#######################################################################
+# Command:
+RM = rm -f
+#######################################################################
+# Sources:
+SOURCES_S = $(CORE)/startup_stm32f405xx.s
+SOURCES_CORE = $(wildcard $(CORE)/*.c)
+
+# Sources LL PERIPH:
+#SOURCES_PERIPH = $(wildcard $(PLIB)/*.c)
+SOURCES_PERIPH = $(PLIB_LL_SRC)/stm32f4xx_ll_rcc.c
+SOURCES_PERIPH += $(PLIB_LL_SRC)/stm32f4xx_ll_gpio.c
+#SOURCES_PERIPH += $(PLIB_HALL_SRC)/stm32f4xx_ll_utils.c
+#SOURCES_PERIPH += $(PLIB_HALL_SRC)/stm32f4xx_ll_i2c.c
+#SOURCES_PERIPH += $(PLIB_HALL_SRC)/stm32f4xx_ll_usart.c
+#SOURCES_PERIPH += $(PLIB_HALL_SRC)/stm32f4xx_ll_tim.c
+#SOURCES_PERIPH += $(PLIB_HALL_SRC)/stm32f4xx_ll_sdmmc.c
+#SOURCES_PERIPH += $(PLIB_HALL_SRC)/stm32f4xx_ll_spi.c
+#SOURCES_PERIPH += $(PLIB_HALL_SRC)/stm32f4xx_ll_adc.c
+#SOURCES_PERIPH += $(PLIB_HALL_SRC)/stm32f4xx_ll_dma.c
+#SOURCES_PERIPH += $(PLIB_HALL_SRC)/stm32f4xx_ll_dma2d.c
+#SOURCES_PERIPH += $(PLIB_HALL_SRC)/stm32f4xx_ll_crc.c
+#SOURCES_PERIPH += $(PLIB_HALL_SRC)/stm32f4xx_ll_dac.c
+#SOURCES_PERIPH += $(PLIB_HALL_SRC)/stm32f4xx_ll_exti.c
+#SOURCES_PERIPH += $(PLIB_HALL_SRC)/stm32f4xx_ll_fmc.c
+#SOURCES_PERIPH += $(PLIB_HALL_SRC)/stm32f4xx_ll_fmpi2c.c
+#SOURCES_PERIPH += $(PLIB_HALL_SRC)/stm32f4xx_ll_fsmc.c
+#SOURCES_PERIPH += $(PLIB_HALL_SRC)/stm32f4xx_ll_lptim.c
+#SOURCES_PERIPH += $(PLIB_HALL_SRC)/stm32f4xx_ll_pwr.c 
+#SOURCES_PERIPH += $(PLIB_HALL_SRC)/stm32f4xx_ll_rng.c
+#SOURCES_PERIPH += $(PLIB_HALL_SRC)/stm32f4xx_ll_rtc.c
+#SOURCES_PERIPH += $(PLIB_HALL_SRC)/stm32f4xx_ll_usb.c
+
+# Sources Library
+#SOURCES_LIB = $(wildcard $(LIBS)/*.c)
+
+SOURCES_LIB_XPRINTF = $(LIBS)/xprintf/src/xprintf.c
+SOURCES_LIB += $(SOURCES_LIB_XPRINTF)
+
+# надо будет сделать разделение файлов на отдельные библиотеки
+SOURCES_C = $(wildcard *.c)
+SOURCES_C += $(SOURCES_CORE)
+SOURCES_C += $(SOURCES_PERIPH)
+SOURCES_C += $(SOURCES_LIB)
+
+SOURCES = $(SOURCES_S) $(SOURCES_C)
+OBJS = $(SOURCES_S:.s=.o) $(SOURCES_C:.c=.o)
+#######################################################################
+# Includes:
+INCLUDES_LIB_XPRINTF = -I$($(LIBS)/xprintf/inc/)
+INCLUDES = -I$(CORE) -I$(PLIB_LL_INC)
+INCLUDES += $(INCLUDES_LIB_XPRINTF)
+
+#######################################################################
+# Defines:
+DEFINES += -D$(DEVICE) 
+DEFINES += -DSTM32F4 -DSTM32F405 
+DEFINES += -DUSE_FULL_LL_DRIVER
+DEFINES += -DHSE_VALUE=800000
+DEFINES += -DVDD_VALUE=3300 
+DEFINES += -DHEAP_SIZE=$(HEAP_SIZE)
+#######################################################################
+# Compiler options flsgs
+
+MCUFLAGS = $(MCU) $(FPU) -mthumb
+OPTIMIZE_FLAGS = -O1
+DEBUG_FLAGS = -O0 -g3 -gdwarf-4
+CFLAGS = -Wall -Wextra --pedantic
+CFLAGS_EXTRA = -nostartfiles -nodefaultlibs -nostdlib
+CFLAGS_EXTRA +=	-fdata-sections -ffunction-sections
+CFLAGS_EXTRA +=	-fno-common 
+#создается файл main.su
+#CFLAGS_EXTRA += -fstack-usage
+#CFLAGS += $(DEFINES) $(MCUFLAGS) $(DEBUG_OPTIMIZE_FLAGS) $(CFLAGS_EXTRA) $(INCLUDES)
+CFLAGS += $(DEFINES) $(MCUFLAGS) $(CFLAGS_EXTRA) $(INCLUDES)
+#######################################################################
+# Linker flags
+LDFLAGS = -static $(MCUFLAGS) 
+LDFLAGS += -Wl,--start-group -lgcc -lc -lg -Wl,--end-group 
+LDFLAGS += -Wl,--gc-sections 
+LDFLAGS += -Wl,--print-memory-usage
+LDFLAGS += -T $(CORE)/STM32_f405_linker_script.ld
+LDFLAGS += -u _printf_float
+LDFLAGS += -u _scanf_float
+#######################################################################
+.PHONY: all clean flash erase 
+
+all:   $(PROJECT).bin $(PROJECT).hex $(PROJECT).asm
+
+clean:
+	$(RM) $(OBJS) $(PROJECT).elf $(PROJECT).bin $(PROJECT).asm $(PROJECT).hex
+	
+	
+flash:	
+	"$(ST_LINK)"  -P $(PROJECT).bin 0x08000000 -V "after_programming" -Rst
+	
+start:	
+	"$(ST_LINK)" -run 0x08000000
+
+
+	
+
+$(PROJECT).elf: $(OBJS)
+
+%.o:%.c %.s
+	$(CC)  $(CFLAGS) -c $<  -o $@ 
+
+%.elf:	
+	$(LD) $(OBJS) $(LDFLAGS) -o $@
+	$(SIZE) -A $@
+
+%.bin: %.elf
+	$(OBJCOPY) -O binary $< $@
+	
+%.hex: %.elf
+	$(OBJCOPY) -O ihex $< $@
+
+%.asm: %.elf
+	"$(OBJDUMP).exe" -dhw $< > $@
